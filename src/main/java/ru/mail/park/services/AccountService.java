@@ -20,13 +20,11 @@ import java.util.Objects;
 @Service
 public class AccountService {
     private final JdbcTemplate template;
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
-    
-    public AccountService(JdbcTemplate template) {
+    private  final PasswordEncoder encoder;
+
+    public AccountService(JdbcTemplate template, PasswordEncoder encoder) {
         this.template = template;
+        this.encoder = encoder;
 
     }
     
@@ -40,7 +38,7 @@ public class AccountService {
                         int index = 0;
                         pst.setString(++index, email);
                         pst.setString(++index, login);
-                        pst.setString(++index, passwordEncoder().encode(password));
+                        pst.setString(++index, encoder.encode(password));
                         return pst;
                     }
 					, keyHolder);
@@ -63,7 +61,7 @@ public class AccountService {
         try {
             String sql = "SELECT `id`, `password` FROM `Users` WHERE `login` = ? ;";
             Security security = template.queryForObject(sql, securityRowMapper,login);
-            if (!passwordEncoder().matches(password, security.getPassword())){
+            if (!encoder.matches(password, security.getPassword())){
                 return -1;
             }
             return security.getId();
